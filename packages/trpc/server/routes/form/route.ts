@@ -29,9 +29,9 @@ export const formRouter = router({
     .output(createFormOutputModel)
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.userId;
-      const { title, description } = input;
+      const { title, description, theme } = input;
 
-      const form = await formService.createForm({ title, description }, userId);
+      const form = await formService.createForm({ title, description, theme }, userId);
 
       return form;
     }),
@@ -48,9 +48,15 @@ export const formRouter = router({
     .output(updateFormOutputModel)
     .mutation(async ({ input }) => {
       console.log(input);
-      const { formId, title, description, isPublished } = input;
+      const { formId, title, description, isPublished, theme } = input;
 
-      const updatedForm = await formService.updateForm({ formId, title, description, isPublished });
+      const updatedForm = await formService.updateForm({
+        formId,
+        title,
+        description,
+        isPublished,
+        theme,
+      });
 
       return updatedForm;
     }),
@@ -107,5 +113,20 @@ export const formRouter = router({
       const form = await formService.getSingleFormDetails({ formId }, userId);
 
       return form;
+    }),
+
+  getAllPublicForms: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/form-list"),
+        tags: TAGS,
+      },
+    })
+    .output(getAllFormsOutputModel)
+    .query(async () => {
+      const result = await formService.getAllPublicForms();
+
+      return result;
     }),
 });

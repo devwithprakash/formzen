@@ -3,12 +3,14 @@ import { z } from "zod";
 export const createFormInput = z.object({
   title: z.string().describe("title of the form"),
   description: z.string().describe("description of the form").nullable().optional(),
+  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
 });
 
 export const updateFormInput = z.object({
   formId: z.string(),
   title: z.string().optional(),
   description: z.string().optional(),
+  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
   isPublished: z
     .preprocess((val) => {
       if (typeof val !== "boolean") {
@@ -25,12 +27,12 @@ export const deleteFormInput = z.object({
 });
 
 export const getFormByIdInput = z.object({
-  formId: z.string().describe("id of the form")
-})
+  formId: z.string().describe("id of the form"),
+});
 
 export const getSingleFormDetailsInput = z.object({
-  formId: z.string().describe("id of the form")
-})
+  formId: z.string().describe("id of the form"),
+});
 
 export type CreateFormInputType = z.infer<typeof createFormInput>;
 export type UpdateFormInputType = z.infer<typeof updateFormInput>;

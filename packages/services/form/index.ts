@@ -46,7 +46,7 @@ async function getUniqueSlug(title: string): Promise<string> {
 }
 
 const createForm = async (payload: CreateFormInputType, userId: string) => {
-  const { title, description } = await createFormInput.parseAsync(payload);
+  const { title, description, theme } = await createFormInput.parseAsync(payload);
 
   const dbUser = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
 
@@ -65,10 +65,12 @@ const createForm = async (payload: CreateFormInputType, userId: string) => {
       slug: uniqueSlug,
       description,
       createdBy: user.id,
+      theme,
     })
     .returning({
       title: formsTable.title,
       description: formsTable.description,
+      theme: formsTable.theme,
     });
 
   if (!form[0] || form.length === 0) {
@@ -156,4 +158,10 @@ const getSingleFormDetails = async (payload: GetSingleFormDetailsInputType, user
   return form;
 };
 
-export { createForm, updateForm, deleteForm, getAllForms, getSingleFormDetails };
+const getAllPublicForms = async () => {
+  const result = await db.select().from(formsTable).where(eq(formsTable.isPublished, true));
+
+  return result;
+};
+
+export { createForm, updateForm, deleteForm, getAllForms, getSingleFormDetails, getAllPublicForms };

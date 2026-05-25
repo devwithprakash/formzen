@@ -17,11 +17,6 @@ export const responseAnswersTable = pgTable("response_answers", {
       onDelete: "cascade",
     }),
 
-  value: text("value"),
+  value: text("value").notNull()
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-
-  updatedAt: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date()),
 });

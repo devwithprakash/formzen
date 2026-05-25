@@ -1,14 +1,16 @@
-import { z } from "zod";
+import { string, z } from "zod";
 
 // create form schema
 export const createFormInputModel = z.object({
   title: z.string().describe("title of the form"),
   description: z.string().describe("description of the form").nullable().optional(),
+  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
 });
 
 export const createFormOutputModel = z.object({
   title: z.string().describe("title of the form"),
   description: z.string().describe("description of the form").nullable().optional(),
+  theme: z.string()
 });
 
 // update form schema
@@ -16,6 +18,7 @@ export const updateFormInputModel = z.object({
   formId: z.string(),
   title: z.string().optional(),
   description: z.string().optional(),
+  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
   isPublished: z
     .preprocess((val) => {
       if (typeof val !== "boolean") {
@@ -31,6 +34,7 @@ export const updateFormOutputModel = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
+  theme: z.string(),
   isPublished: z.boolean(),
   createdBy: z.string(),
   slug: z.string(),
@@ -47,6 +51,7 @@ export const deleteFormOutputModel = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
+  theme: z.string(),
   isPublished: z.boolean(),
   createdBy: z.string(),
   slug: z.string(),
@@ -60,6 +65,8 @@ export const getAllFormsOutputModel = z.array(
     id: z.string(),
     title: z.string(),
     description: z.string().nullable(),
+
+    theme: z.string(),
 
     slug: z.string(),
     isPublished: z.boolean(),
@@ -123,6 +130,7 @@ export const getSingleFormDetailsOutputModel = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable().optional(),
+  theme: string(),
   slug: z.string(),
   isPublished: z.boolean(),
   formFields: z.array(formFieldModel),
@@ -130,3 +138,19 @@ export const getSingleFormDetailsOutputModel = z.object({
   createdAt: z.date(),
   updatedAt: z.date().nullable().optional(),
 });
+
+// get all public forms
+
+export const allFormSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  theme: z.string(),
+  isPublished: z.boolean(),
+  slug: z.string(),
+  createdBy: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const getAllPublicFormsOutputModel = z.array(allFormSchema);
