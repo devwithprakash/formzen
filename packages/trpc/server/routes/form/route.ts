@@ -6,6 +6,8 @@ import {
   deleteFormInputModel,
   deleteFormOutputModel,
   getAllFormsOutputModel,
+  getFormBySlugInputModel,
+  getFormBySlugOutputModel,
   getSingleFormDetailsInputModel,
   getSingleFormDetailsOutputModel,
   updateFormInputModel,
@@ -47,7 +49,6 @@ export const formRouter = router({
     .input(updateFormInputModel)
     .output(updateFormOutputModel)
     .mutation(async ({ input }) => {
-      console.log(input);
       const { formId, title, description, isPublished, theme } = input;
 
       const updatedForm = await formService.updateForm({
@@ -108,6 +109,7 @@ export const formRouter = router({
     .output(getSingleFormDetailsOutputModel)
     .query(async ({ input, ctx }) => {
       const { formId } = input;
+
       const userId = ctx.userId;
 
       const form = await formService.getSingleFormDetails({ formId }, userId);
@@ -128,5 +130,23 @@ export const formRouter = router({
       const result = await formService.getAllPublicForms();
 
       return result;
+    }),
+
+  getFormBySlug: publicProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: getPath("/get/{slug}"),
+      },
+    })
+    .input(getFormBySlugInputModel)
+    .output(getFormBySlugOutputModel)
+    .query(async ({ input, ctx }) => {
+      const {ipAddress} = ctx
+      const { slug } = input;
+
+      const form = await formService.getFormBySlug({ slug }, ipAddress);
+
+      return form;
     }),
 });

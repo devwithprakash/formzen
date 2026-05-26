@@ -5,43 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1779470205025,
-      "tag": "0000_smart_wolfpack",
+      "when": 1779734588205,
+      "tag": "0000_right_shaman",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1779523417168,
-      "tag": "0001_bent_guardian",
+      "when": 1779780020654,
+      "tag": "0001_rare_red_shift",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1779524474723,
-      "tag": "0002_oval_arachne",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1779605739812,
-      "tag": "0003_tough_satana",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1779606605113,
-      "tag": "0004_thin_maverick",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1779607703312,
-      "tag": "0005_bizarre_redwing",
+      "when": 1779829893514,
+      "tag": "0002_cultured_mystique",
       "breakpoints": true
     }
   ]

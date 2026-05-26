@@ -1,12 +1,26 @@
-import db, { InferSelectModel } from "@repo/database";
-import { submitResponseInput, SubmitResponseInputType } from "./model";
-import { formResponsesTable, responseAnswersTable } from "@repo/database/schema";
+import db, { eq, InferSelectModel } from "@repo/database";
+import {
+  getFormResponseInput,
+  GetFormResponseInputType,
+  submitResponseInput,
+  SubmitResponseInputType,
+} from "./model";
+import { formFieldsTable, formResponsesTable, responseAnswersTable } from "@repo/database/schema";
 import { throwTRPCError } from "../../trpc/server/utils/trpc-error";
 
 type ResponseAnswer = InferSelectModel<typeof responseAnswersTable>;
 
 const createResponse = async (payload: SubmitResponseInputType) => {
   const { formId, ipAddress, answer } = await submitResponseInput.parseAsync(payload);
+
+  const [existingResponse] = await db
+    .select()
+    .from(formResponsesTable)
+    .where(eq(formResponsesTable.ipAddress, ipAddress));
+
+  if (existingResponse) {
+    throwTRPCError("BAD_REQUEST", "User already submitted the response");
+  }
 
   const [insertedResponse] = await db
     .insert(formResponsesTable)
@@ -41,4 +55,27 @@ const createResponse = async (payload: SubmitResponseInputType) => {
   return { ...insertedResponse, answers: responseAnswer };
 };
 
-export { createResponse };
+const getFormResponse = async (payload: GetFormResponseInputType) => {
+  const { formId } = await getFormResponseInput.parseAsync(payload);
+
+  const fields = await db
+    .select()
+    .from(formFieldsTable)
+    .where(eq(formFieldsTable.formId, formId))
+    .orderBy(formFieldsTable.order);
+
+  const responses = await db.query.formResponsesTable.findMany({
+    where: eq(formResponsesTable.formId, formId),
+    orderBy: (responses, { desc }) => [desc(responses.submittedAt)],
+    with: {
+      answers: true,
+    },
+  });
+
+  return {
+    fields,
+    responses,
+  };
+};
+
+export { createResponse, getFormResponse };

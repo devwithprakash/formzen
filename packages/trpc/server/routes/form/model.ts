@@ -4,13 +4,19 @@ import { string, z } from "zod";
 export const createFormInputModel = z.object({
   title: z.string().describe("title of the form"),
   description: z.string().describe("description of the form").nullable().optional(),
-  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
+  theme: z.enum(["light", "dark", "minimal", "gradient"]),
 });
 
 export const createFormOutputModel = z.object({
-  title: z.string().describe("title of the form"),
-  description: z.string().describe("description of the form").nullable().optional(),
-  theme: z.string()
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  theme: z.string(),
+  isPublished: z.boolean(),
+  createdBy: z.string(),
+  slug: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date().nullable(),
 });
 
 // update form schema
@@ -18,7 +24,7 @@ export const updateFormInputModel = z.object({
   formId: z.string(),
   title: z.string().optional(),
   description: z.string().optional(),
-  theme: z.enum(["light", "dark", "minimal", "gradient", "modern"]),
+  theme: z.enum(["light", "dark", "minimal", "gradient"]),
   isPublished: z
     .preprocess((val) => {
       if (typeof val !== "boolean") {
@@ -34,7 +40,7 @@ export const updateFormOutputModel = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
-  theme: z.string(),
+  theme: z.enum(["light", "dark", "minimal", "gradient"]),
   isPublished: z.boolean(),
   createdBy: z.string(),
   slug: z.string(),
@@ -51,7 +57,7 @@ export const deleteFormOutputModel = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string().nullable(),
-  theme: z.string(),
+  theme: z.enum(["light", "dark", "minimal", "gradient"]),
   isPublished: z.boolean(),
   createdBy: z.string(),
   slug: z.string(),
@@ -66,7 +72,7 @@ export const getAllFormsOutputModel = z.array(
     title: z.string(),
     description: z.string().nullable(),
 
-    theme: z.string(),
+    theme: z.enum(["light", "dark", "minimal", "gradient"]),
 
     slug: z.string(),
     isPublished: z.boolean(),
@@ -151,6 +157,25 @@ export const allFormSchema = z.object({
   createdBy: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
+});
+
+// get form by slug
+
+export const getFormBySlugInputModel = z.object({
+  slug: z.string()
+})
+
+export const getFormBySlugOutputModel = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  theme: z.string(), // ◄ Fixed: Added "z." prefix here
+  slug: z.string(),
+  isPublished: z.boolean(),
+  formFields: z.array(formFieldModel),
+  createdBy: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date().nullable().optional(),
 });
 
 export const getAllPublicFormsOutputModel = z.array(allFormSchema);

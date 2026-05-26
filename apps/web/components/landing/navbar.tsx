@@ -1,33 +1,46 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { Menu, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth, UserButton, Show, useClerk } from "@clerk/nextjs";
+import { useMe } from "@/hooks/auth/use-me";
 
 const navLinks = [
   { href: "#features", label: "Features" },
   { href: "#integrations", label: "Integrations" },
   { href: "/explore", label: "Explore" },
   { href: "/pricing", label: "Pricing" },
-]
+];
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isScrolled, setIsScrolled] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+
+  const { me, getMe, isLoading } = useMe();
+
+  console.log(me?.fullName);
+
+  useEffect(() => {
+    getMe();
+  }, []);
 
   // Track window scroll state to change visual density dynamically
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
-        setIsScrolled(true)
+        setIsScrolled(true);
       } else {
-        setIsScrolled(false)
+        setIsScrolled(false);
       }
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <motion.nav
@@ -35,14 +48,13 @@ export function Navbar() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform-gpu ${
-        isScrolled 
-          ? "bg-background/70 backdrop-blur-md border-b border-border/40 py-0" 
+        isScrolled
+          ? "bg-background/70 backdrop-blur-md border-b border-border/40 py-0"
           : "bg-transparent border-b border-transparent py-2"
       }`}
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          
           {/* Logo Brand Engine */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
@@ -68,11 +80,24 @@ export function Navbar() {
 
           {/* Desktop Call to Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Link href="/dashboard">
-              <Button variant="ghost" className="text-sm font-medium hover:bg-secondary/60 rounded-full px-5">
-                Sign in
-              </Button>
-            </Link>
+            <Show when="signed-out">
+              <Link
+                href="/sign-in"
+                className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-zinc-200"
+              >
+                Log In
+              </Link>
+            </Show>
+
+            <Show when="signed-in">
+              <button
+                onClick={() => signOut()}
+                className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-zinc-200"
+              >
+                Log Out
+              </button>
+            </Show>
+
             <Link href="/dashboard">
               <Button className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium px-6 shadow-sm">
                 Get Started Free
@@ -118,10 +143,13 @@ export function Navbar() {
                   </Link>
                 ))}
               </div>
-              
+
               <div className="flex flex-col gap-2.5 pt-5 border-t border-border/40">
                 <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="justify-center text-sm font-medium w-full rounded-full border-border">
+                  <Button
+                    variant="outline"
+                    className="justify-center text-sm font-medium w-full rounded-full border-border"
+                  >
                     Sign in
                   </Button>
                 </Link>
@@ -136,5 +164,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </motion.nav>
-  )
+  );
 }

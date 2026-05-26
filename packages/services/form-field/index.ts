@@ -1,137 +1,170 @@
 import { formFieldsTable } from "@repo/database/models/form-field";
 import {
-  createFormFieldInput,
-  CreateFormFieldInputType,
-  formFieldOptionInput,
-  updateFormFieldInput,
-  UpdateFormFieldInputType,
+  createFormFieldBatchInput,
+  CreateFormFieldBatchInputType,
+  UpdateBatchFormFieldInputType,
+  updateBatchFormFieldItemInput,
+  updateBatchFormFieldsInput,
 } from "./model";
-import db, { eq } from "@repo/database";
+import db, { and, eq, notInArray } from "@repo/database";
 import { throwTRPCError } from "../../trpc/server/utils/trpc-error";
 import { fieldOptionsTable } from "@repo/database/models/field-options";
 
-const createFormField = async (payload: CreateFormFieldInputType) => {
-  const data = await createFormFieldInput.parseAsync(payload);
+const createFormFieldBatch = async (payload: CreateFormFieldBatchInputType) => {
+  const batchData = await createFormFieldBatchInput.parseAsync(payload);
 
   return await db.transaction(async (tx) => {
-    // create form field
-    const inserted = await tx
-      .insert(formFieldsTable)
-      .values({
-        formId: data.formId,
-        label: data.label,
-        type: data.type,
-        order: data.order,
-        required: data.required,
-        helperText: data.helperText,
-        placeholder: data.placeholder,
-        minLength: data.minLength,
-        maxLength: data.maxLength,
-        minValue: data.minValue,
-        maxValue: data.maxValue,
-      })
-      .returning();
+    const results = [];
 
-    const field = inserted[0];
-
-    if (!field) {
-      throwTRPCError("INTERNAL_SERVER_ERROR", "Field creation failed");
-    }
-
-    const optionsFieldTypes = ["select", "radio", "checkbox"];
-
-    let options: any[] = [];
-
-    if (optionsFieldTypes.includes(data.type) && data.options?.length) {
-      const parsedOptions = data.options.map((opt, index) =>
-        // zod validation of field options
-        formFieldOptionInput.parse({
-          label: opt.label,
-          value: opt.value,
-          order: opt.order ?? index,
-        }),
-      );
-
-      const optionsToInsert = parsedOptions.map((opt) => ({
-        ...opt,
-        fieldId: field.id,
-      }));
-
-      // insert field options in db
-      const insertedOptions = await tx
-        .insert(fieldOptionsTable)
-        .values(optionsToInsert)
+    for (const fieldData of batchData) {
+      const insertedFields = await tx
+        .insert(formFieldsTable)
+        .values({
+          formId: fieldData.formId,
+          label: fieldData.label,
+          type: fieldData.type,
+          order: fieldData.order,
+          required: fieldData.required,
+          helperText: fieldData.helperText,
+          placeholder: fieldData.placeholder,
+          minLength: fieldData.minLength,
+          maxLength: fieldData.maxLength,
+          minValue: fieldData.minValue,
+          maxValue: fieldData.maxValue,
+        })
         .returning();
 
-      if (!insertedOptions[0]) {
-        throwTRPCError("INTERNAL_SERVER_ERROR", "Failed to store field options");
+      const field = insertedFields[0];
+
+      if (!field) {
+        throwTRPCError("INTERNAL_SERVER_ERROR", `Field creation failed for: ${fieldData.label}`);
       }
 
-      options = insertedOptions;
+      const optionsFieldTypes = ["select", "radio", "checkbox"];
+      let insertedOptionsResult: any[] = [];
+
+      if (optionsFieldTypes.includes(fieldData.type) && fieldData.options?.length) {
+        const optionsToInsert = fieldData.options.map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+          order: opt.order,
+          fieldId: field.id,
+        }));
+
+        const insertedOptions = await tx
+          .insert(fieldOptionsTable)
+          .values(optionsToInsert)
+          .returning();
+
+        if (!insertedOptions.length) {
+          throwTRPCError(
+            "INTERNAL_SERVER_ERROR",
+            `Failed to store field options for: ${fieldData.label}`,
+          );
+        }
+
+        insertedOptionsResult = insertedOptions;
+      }
+
+      results.push({
+        ...field,
+        options: insertedOptionsResult,
+      });
     }
 
-    return {
-      ...field,
-      options,
-    } as typeof field & { options: typeof options };
+    return results;
   });
 };
 
-const updateFormField = async (payload: UpdateFormFieldInputType) => {
-  const data = await updateFormFieldInput.parseAsync(payload);
+const updateFormFieldsBatch = async (payload: UpdateBatchFormFieldInputType) => {
+  const incomingFields = await updateBatchFormFieldsInput.parseAsync(payload);
 
-  const formFieldId = data.formFieldId;
+  if (!incomingFields.length) return [];
+
+  const formId = incomingFields[0]?.formId ?? "defaultId";
+
+  const optionFieldTypes = ["select", "radio", "checkbox"];
 
   return await db.transaction(async (tx) => {
-    // updating form field
-    const [updatedField] = await tx
-      .update(formFieldsTable)
-      .set({
-        label: data.label ?? undefined,
-        type: data.type ?? undefined,
-        required: data.required ?? undefined,
-        order: data.order ?? undefined,
-        placeholder: data.placeholder,
-        helperText: data.helperText,
-        minLength: data.minLength,
-        maxLength: data.maxLength,
-        minValue: data.minValue,
-        maxValue: data.maxValue,
-      })
-      .where(eq(formFieldsTable.id, formFieldId))
-      .returning();
+    // handle deletions first to clear out removed fields and cascade options
 
-    if (!updatedField) {
-      throwTRPCError("NOT_FOUND", "Field not found or unauthorized");
+    const incomingDbIds: string[] = incomingFields
+      .map((f) => f.id)
+      .filter((id): id is string => !!id && !id.startsWith("field-"));
+
+    if (incomingDbIds.length > 0) {
+      await tx
+        .delete(formFieldsTable)
+        .where(
+          and(eq(formFieldsTable.formId, formId), notInArray(formFieldsTable.id, incomingDbIds)),
+        );
+    } else {
+      // If the canvas was emptied, wipe all records tied to this form
+      await tx.delete(formFieldsTable).where(eq(formFieldsTable.formId, formId));
     }
 
-    let options: (typeof fieldOptionsTable.$inferSelect)[] = [];
+    const processedFields = [];
 
-    // updating options if provided
-    if (data.options?.length) {
-      await tx.delete(fieldOptionsTable).where(eq(fieldOptionsTable.fieldId, formFieldId));
+    // 2. Process Creates and Updates
+    for (const fieldData of incomingFields) {
+      const isNewField = !fieldData.id || fieldData.id.startsWith("field-");
+      let finalFieldRecord;
 
-      await tx.insert(fieldOptionsTable).values(
-        data.options.map((opt, index) => ({
-          fieldId: formFieldId,
-          label: opt.label ?? "",
-          value: opt.value ?? "",
-          order: opt.order ?? index,
-        })),
-      );
+      const fieldValues = {
+        formId: fieldData.formId,
+        label: fieldData.label,
+        type: fieldData.type,
+        required: fieldData.required ?? false,
+        order: fieldData.order,
+        placeholder: fieldData.placeholder ?? null,
+        helperText: fieldData.helperText ?? null,
+        minLength: fieldData.minLength ?? null,
+        maxLength: fieldData.maxLength ?? null,
+        minValue: fieldData.minValue ?? null,
+        maxValue: fieldData.maxValue ?? null,
+      };
+
+      if (isNewField) {
+        const [inserted] = await tx.insert(formFieldsTable).values(fieldValues).returning();
+        finalFieldRecord = inserted;
+      } else {
+        const [updated] = await tx
+          .update(formFieldsTable)
+          .set(fieldValues)
+          .where(eq(formFieldsTable.id, fieldData.id))
+          .returning();
+        finalFieldRecord = updated;
+      }
+
+      if (!finalFieldRecord) {
+        throwTRPCError("INTERNAL_SERVER_ERROR", `Failed to save field: ${fieldData.label}`);
+      }
+
+      // 3. Synchronize Child Options (Wipe and replace old options)
+      await tx.delete(fieldOptionsTable).where(eq(fieldOptionsTable.fieldId, finalFieldRecord.id));
+
+      let synchronizedOptions: (typeof fieldOptionsTable.$inferSelect)[] = [];
+      if (optionFieldTypes.includes(finalFieldRecord.type) && fieldData.options?.length) {
+        synchronizedOptions = await tx
+          .insert(fieldOptionsTable)
+          .values(
+            fieldData.options.map((opt, index) => ({
+              fieldId: finalFieldRecord!.id,
+              label: opt.label,
+              value: opt.value,
+              order: opt.order ?? index,
+            })),
+          )
+          .returning();
+      }
+
+      processedFields.push({
+        ...finalFieldRecord,
+        options: synchronizedOptions,
+      });
     }
 
-    // getting options as a single source of truth
-    options = await tx
-      .select()
-      .from(fieldOptionsTable)
-      .where(eq(fieldOptionsTable.fieldId, formFieldId))
-      .orderBy(fieldOptionsTable.order);
-
-    return {
-      ...updatedField,
-      options,
-    };
+    return processedFields.sort((a, b) => a.order - b.order);
   });
 };
 
@@ -150,4 +183,4 @@ const deleteFormField = async (formFieldId: string) => {
   return deletedFormField;
 };
 
-export { createFormField, updateFormField, deleteFormField };
+export { createFormFieldBatch, updateFormFieldsBatch, deleteFormField };

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import { GlobalProviders } from "@/providers/global";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,11 +45,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} bg-background`}>
-      <body className="font-sans antialiased">
-        {children}
-        {process.env.NODE_ENV === "production" && <Analytics />}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} ${playfair.variable} bg-background`}>
+        <body className="font-sans antialiased">
+          <GlobalProviders>
+            {" "}
+            {/* ✅ add this */}
+            {children}
+            {process.env.NODE_ENV === "production" && <Analytics />}
+          </GlobalProviders>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

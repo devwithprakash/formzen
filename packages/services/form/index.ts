@@ -4,6 +4,8 @@ import {
   CreateFormInputType,
   deleteFormInput,
   DeleteFormInputType,
+  getFormBySlugInput,
+  GetFormBySlugInputType,
   getSingleFormDetailsInput,
   GetSingleFormDetailsInputType,
   updateFormInput,
@@ -13,6 +15,7 @@ import { throwTRPCError } from "../../trpc/server/utils/trpc-error";
 
 import { formsTable, formsRelations } from "@repo/database/models/form";
 import { usersTable } from "@repo/database/models/user";
+import { formResponsesTable } from "@repo/database/schema";
 
 function generateSlug(title: string) {
   return title
@@ -67,11 +70,7 @@ const createForm = async (payload: CreateFormInputType, userId: string) => {
       createdBy: user.id,
       theme,
     })
-    .returning({
-      title: formsTable.title,
-      description: formsTable.description,
-      theme: formsTable.theme,
-    });
+    .returning();
 
   if (!form[0] || form.length === 0) {
     throw new Error("Failed to create form");
@@ -81,7 +80,8 @@ const createForm = async (payload: CreateFormInputType, userId: string) => {
 };
 
 const updateForm = async (payload: UpdateFormInputType) => {
-  const { formId, title, description, isPublished } = await updateFormInput.parseAsync(payload);
+  const { formId, title, description, isPublished, theme } =
+    await updateFormInput.parseAsync(payload);
 
   const result = await db
     .update(formsTable)
@@ -89,6 +89,7 @@ const updateForm = async (payload: UpdateFormInputType) => {
       title,
       description,
       isPublished,
+      theme,
     })
     .where(eq(formsTable.id, formId))
     .returning();
@@ -134,6 +135,7 @@ const getSingleFormDetails = async (payload: GetSingleFormDetailsInputType, user
   const { formId } = await getSingleFormDetailsInput.parseAsync(payload);
 
   const dbUser = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
+
   const user = dbUser[0];
 
   if (!user) {
@@ -164,4 +166,40 @@ const getAllPublicForms = async () => {
   return result;
 };
 
-export { createForm, updateForm, deleteForm, getAllForms, getSingleFormDetails, getAllPublicForms };
+const getFormBySlug = async (payload: GetFormBySlugInputType, ipAddress: string) => {
+  const { slug } = await getFormBySlugInput.parseAsync(payload);
+
+  const [existingResponse] = await db.select().from(formResponsesTable).where(eq(formResponsesTable.ipAddress, ipAddress))
+
+  if(existingResponse){
+    throwTRPCError("BAD_REQUEST", "User already submitted the form")
+  }
+
+
+
+  const form = await db.query.formsTable.findFirst({
+    where: and(eq(formsTable.slug, slug)),
+    with: {
+      formFields: {
+        with: {
+          fieldOptions: true,
+        },
+      },
+    },
+  });
+
+  if (!form) {
+    throwTRPCError("NOT_FOUND", "The requested form context configuration could not be located.");
+  }
+  return form;
+};
+
+export {
+  createForm,
+  updateForm,
+  deleteForm,
+  getAllForms,
+  getSingleFormDetails,
+  getAllPublicForms,
+  getFormBySlug,
+};
