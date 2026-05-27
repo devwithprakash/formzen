@@ -1,7 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Routes accessible to everyone (logged in or out)
 const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
@@ -13,15 +12,16 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  // Logged-out users hitting protected routes → sign-in
   if (!userId && !isPublicRoute(req)) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
+
+  return NextResponse.next();
 });
 
 export const config = {
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|.*\\..*).*)",
     "/(api|trpc)(.*)",
   ],
 };
