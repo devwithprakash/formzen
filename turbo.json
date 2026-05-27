@@ -4,7 +4,9 @@
     "NODE_ENV",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
     "CLERK_SECRET_KEY",
-    "DATABASE_URL"
+    "DATABASE_URL",
+    "FRONTEND_URL",
+    "API_DOCS_URL"
   ],
   "ui": "tui",
   "tasks": {
