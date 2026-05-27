@@ -10,7 +10,7 @@ export const createTRPCHttpBatchClientClient = (opts?: CreateTRPCHttpBatchClient
   const c = opts?.enableStreaming ? httpBatchStreamLink : httpLink;
 
   return c({
-   url: env.NEXT_PUBLIC_API_URL ?? "https://formzen-0a8n.onrender.com/trpc",
+   url: env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/trpc",
 
     async headers() {
       const token = await opts?.getToken?.();
