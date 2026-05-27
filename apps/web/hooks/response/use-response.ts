@@ -16,10 +16,8 @@ export const useSubmitFormResponses = () => {
   const submitResponsesMutation = trpc.response.create.useMutation({
     onSuccess: (data) => {
       utils.response.invalidate();
-      console.log("Submission successful:", data);
     },
     onError: (error) => {
-      console.log(error.message);
       console.error("Failed to submit responses:", error.message);
     },
   });

@@ -6,7 +6,7 @@ export const useSyncFormFields = () => {
   const syncFieldsMutation = trpc.formField.sync.useMutation({
     onSuccess: (data) => {
       utils.formField.invalidate();
-      console.log("Configuration synced successfully:", data);
+
     },
     
     onError: (err) => {

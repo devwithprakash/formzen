@@ -66,8 +66,6 @@ export const useGetForm = (
 export const useGetAllForms = () => {
   const { data, isLoading, error } = trpc.form.getAll.useQuery();
 
-  console.log(data);
-
   return {
     data,
     isLoading,
@@ -81,7 +79,6 @@ export const useUpdateForm = () => {
   const updateFormMutation = trpc.form.update.useMutation({
     onSuccess: (data) => {
       utils.form.invalidate();
-      console.log(data);
     },
 
     onError: (error) => {
@@ -101,7 +98,6 @@ export const useDeleteForm = () => {
     onSuccess: (data) => {
       utils.form.invalidate();
 
-      console.log(data);
     },
     onError: (error) => {
       console.error("Failed to delete form:", error.message);

@@ -63,7 +63,7 @@ export default function FormsPage() {
   };
 
   const handleCopyLink = async (slug: string) => {
-    const url = `http://localhost:3000/forms/${slug}`;
+    const url = `${process.env.FRONTEND_URL}/${slug}`;
 
     await navigator.clipboard.writeText(url);
   };

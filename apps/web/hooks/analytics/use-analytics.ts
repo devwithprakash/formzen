@@ -3,8 +3,6 @@ import { trpc } from "@/trpc/client";
 export const useFormAnalytics = () => {
   const { data, error, isLoading } = trpc.analytics.getFormAnalytics.useQuery();
 
-  console.log(data)
-
   return {
     data,
     error,
@@ -14,8 +12,6 @@ export const useFormAnalytics = () => {
 
 export const useDashboardAnalytics = ()=>{
   const {data, error, isLoading} = trpc.analytics.getDashboardAnalytics.useQuery()
-
-  console.log(data)
 
   return {
     data,

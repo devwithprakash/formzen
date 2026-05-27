@@ -54,10 +54,7 @@ interface FormField {
 
 type FormData = Record<string, FieldValue>;
 
-/* ─────────────────────────────────────────────
-   Theme definitions — only colours / surfaces
-   changed; palette keys kept identical to original
-───────────────────────────────────────────── */
+
 const themeStyles: Record<
   FormTheme,
   {
@@ -77,7 +74,7 @@ const themeStyles: Record<
     successSubtitle: string;
   }
 > = {
-  /* ── LIGHT ── */
+
   light: {
     page: "min-h-screen w-full flex justify-center items-start py-10 px-4 sm:py-20 bg-[#fafafa]",
     headerCard:
@@ -100,7 +97,7 @@ const themeStyles: Record<
     successSubtitle: "text-slate-500",
   },
 
-  /* ── MINIMAL ── */
+
   minimal: {
     page: "min-h-screen w-full flex justify-center items-start py-10 px-4 sm:py-20 bg-[#fffafd]",
     headerCard:
@@ -124,7 +121,7 @@ const themeStyles: Record<
     successSubtitle: "text-slate-500",
   },
 
-  /* ── DARK ── */
+
   dark: {
     page: "min-h-screen w-full flex justify-center items-start py-10 px-4 sm:py-20 bg-[#040807]",
     headerCard:
@@ -148,7 +145,7 @@ const themeStyles: Record<
     successSubtitle: "text-zinc-400",
   },
 
-  /* ── GRADIENT ── */
+
   gradient: {
     page: "min-h-screen w-full flex justify-center items-start py-10 px-4 sm:py-20 bg-gradient-to-br from-orange-50 via-white to-purple-50",
     headerCard:
@@ -173,9 +170,6 @@ const themeStyles: Record<
   },
 };
 
-/* ─────────────────────────────────────────────
-   Component
-───────────────────────────────────────────── */
 export default function PublicFormPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -245,7 +239,7 @@ export default function PublicFormPage() {
     }
   };
 
-  /* ── Loading ── */
+
   if (isLoading) {
     return (
       <div className={`${t.page} items-center`}>
@@ -254,7 +248,6 @@ export default function PublicFormPage() {
     );
   }
 
-  /* ── Error / private ── */
   if (error || !form || form.visibility === "private") {
     return (
       <div className={t.page}>
@@ -273,7 +266,6 @@ export default function PublicFormPage() {
     );
   }
 
-  /* ── Success ── */
   if (isSubmitted) {
     return (
       <div className={t.page}>
@@ -298,14 +290,13 @@ export default function PublicFormPage() {
   const fields = (form.formFields ?? []) as FormField[];
   const requiredCount = fields.filter((f) => f.required).length;
 
-  /* ── Form ── */
   return (
     <div className={t.page}>
       <div className="w-full max-w-xl space-y-4">
 
-        {/* ── Header card ── */}
+
         <div className={t.headerCard}>
-          {/* Thin accent bar */}
+
           <div className="h-1 w-full bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300 opacity-40" />
           <div className="px-8 py-7">
             <h1 className="text-2xl font-bold tracking-tight leading-tight mb-2">
@@ -322,21 +313,21 @@ export default function PublicFormPage() {
           </div>
         </div>
 
-        {/* ── Fields card ── */}
+
         <form onSubmit={handleSubmit}>
           <div className={`${t.bodyCard} px-8 py-7`}>
             <div className="space-y-7">
               {fields.map((field, idx) => (
                 <div key={field.id}>
-                  {/* Divider between fields */}
+       
                   {idx > 0 && <hr className={`${t.divider} border-t mb-7`} />}
 
                   <div className="flex items-start gap-3">
-                    {/* Field index pill */}
+             
                     <span className={`${t.fieldNumber} mt-0.5`}>{idx + 1}</span>
 
                     <div className="flex-1 space-y-2 min-w-0">
-                      {/* Label row */}
+               
                       <div className="flex items-center gap-2">
                         <Label className={t.label}>{field.label}</Label>
                         {field.required && (
@@ -347,12 +338,12 @@ export default function PublicFormPage() {
                         )}
                       </div>
 
-                      {/* Helper text */}
+        
                       {field.helperText && (
                         <p className={t.helperText}>{field.helperText}</p>
                       )}
 
-                      {/* ── Input types ── */}
+               
                       {field.type === "text" && (
                         <Input
                           className={t.input}
@@ -484,7 +475,6 @@ export default function PublicFormPage() {
               ))}
             </div>
 
-            {/* ── Validation error ── */}
             {validationError && (
               <div className={`${t.errorBox} mt-6`}>
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -492,7 +482,7 @@ export default function PublicFormPage() {
               </div>
             )}
 
-            {/* ── Submit ── */}
+  
             <div className="mt-8 pt-6 border-t border-current/5">
               <Button
                 type="submit"
@@ -515,11 +505,11 @@ export default function PublicFormPage() {
           </div>
         </form>
 
-        {/* ── Footer branding ── */}
+
         <p className="text-center text-[11px] opacity-30 pb-4">
-          Powered by Formify
+          Powered by FormZen
         </p>
-      </div>
+      </div>  
     </div>
   );
 }

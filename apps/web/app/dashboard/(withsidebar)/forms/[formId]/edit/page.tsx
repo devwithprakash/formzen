@@ -97,6 +97,7 @@ export default function FormSettingsPage() {
       setTitle(form.title ?? "");
       setDescription(form.description ?? "");
       setIsPublished(form.isPublished);
+      setVisibility(form.visibility)
       if (form?.theme) {
         setTheme(form.theme as "light" | "dark" | "minimal" | "gradient");
       }

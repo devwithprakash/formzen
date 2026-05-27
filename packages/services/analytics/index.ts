@@ -55,8 +55,6 @@ const getDashboardAnalytics = async (userId: string) => {
     .leftJoin(formResponsesTable, eq(formsTable.id, formResponsesTable.formId))
     .where(eq(formsTable.createdBy, user.id));
 
-  console.log(analyticsResult[0]);
-
   return (
     analyticsResult[0] || {
       totalForms: 0,
