@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Show, useClerk } from "@clerk/nextjs";
 import { useMe } from "@/hooks/auth/use-me";
 
-const DOCS_URL=process.env.API_DOCS_URL as string
+const DOCS_URL = process.env.NEXT_PUBLIC_API_DOCS_URL as string;
 
 const navLinks = [
   { href: "#features", label: "Features" },
