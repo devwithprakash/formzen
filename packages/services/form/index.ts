@@ -1,4 +1,4 @@
-import db, { and, eq, like } from "@repo/database";
+import db, { and, count, eq, like } from "@repo/database";
 import {
   createFormInput,
   CreateFormInputType,
@@ -13,7 +13,7 @@ import {
 } from "./model";
 import { throwTRPCError } from "../../trpc/server/utils/trpc-error";
 
-import { formsTable, formsRelations } from "@repo/database/models/form";
+import { formsTable } from "@repo/database/models/form";
 import { usersTable } from "@repo/database/models/user";
 import { formResponsesTable } from "@repo/database/schema";
 
@@ -79,9 +79,15 @@ const createForm = async (payload: CreateFormInputType, userId: string) => {
   return form[0];
 };
 
-const updateForm = async (payload: UpdateFormInputType) => {
-  const { formId, title, description, isPublished, theme } =
+const updateForm = async (payload: UpdateFormInputType, userId: string) => {
+  const { formId, title, description, isPublished, theme, visibility } =
     await updateFormInput.parseAsync(payload);
+
+  const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
+
+  if (!dbUser) {
+    throwTRPCError("NOT_FOUND", "User not found");
+  }
 
   const result = await db
     .update(formsTable)
@@ -90,23 +96,34 @@ const updateForm = async (payload: UpdateFormInputType) => {
       description,
       isPublished,
       theme,
+      visibility,
+      updatedAt: new Date(),
     })
-    .where(eq(formsTable.id, formId))
+    .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, dbUser.id)))
     .returning();
 
   const updatedForm = result[0];
 
   if (!updatedForm) {
-    throwTRPCError("NOT_FOUND", "Form not found");
+    throwTRPCError("NOT_FOUND", "Form not found or you do not have permission to update it");
   }
 
   return updatedForm;
 };
 
-const deleteForm = async (payload: DeleteFormInputType) => {
+const deleteForm = async (payload: DeleteFormInputType, userId: string) => {
   const { formId } = await deleteFormInput.parseAsync(payload);
 
-  const result = await db.delete(formsTable).where(eq(formsTable.id, formId)).returning();
+  const [dbUser] = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
+
+  if (!dbUser) {
+    throwTRPCError("NOT_FOUND", "User not found");
+  }
+
+  const result = await db
+    .delete(formsTable)
+    .where(and(eq(formsTable.id, formId), eq(formsTable.createdBy, dbUser.id)))
+    .returning();
 
   const deletedForm = result[0];
 
@@ -119,19 +136,29 @@ const deleteForm = async (payload: DeleteFormInputType) => {
 
 const getAllForms = async (userId: string) => {
   const dbUser = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
-
   const user = dbUser[0];
 
   if (!user) {
     throwTRPCError("NOT_FOUND", "User not found");
   }
 
-  const result = await db.select().from(formsTable).where(eq(formsTable.createdBy, user.id));
+  const result = await db
+    .select({
+      form: formsTable,
+      responseCount: count(formResponsesTable.id),
+    })
+    .from(formsTable)
+    .leftJoin(formResponsesTable, eq(formsTable.id, formResponsesTable.formId))
+    .where(eq(formsTable.createdBy, user.id))
+    .groupBy(formsTable.id);
 
-  return result;
+  return result.map(({ form, responseCount }) => ({
+    ...form,
+    responseCount,
+  }));
 };
 
-const getSingleFormDetails = async (payload: GetSingleFormDetailsInputType, userId: string) => {
+const getFormById = async (payload: GetSingleFormDetailsInputType, userId: string) => {
   const { formId } = await getSingleFormDetailsInput.parseAsync(payload);
 
   const dbUser = await db.select().from(usersTable).where(eq(usersTable.clerkUserId, userId));
@@ -161,7 +188,10 @@ const getSingleFormDetails = async (payload: GetSingleFormDetailsInputType, user
 };
 
 const getAllPublicForms = async () => {
-  const result = await db.select().from(formsTable).where(eq(formsTable.isPublished, true));
+  const result = await db
+    .select()
+    .from(formsTable)
+    .where(eq(formsTable.visibility, "public" as any));
 
   return result;
 };
@@ -169,28 +199,34 @@ const getAllPublicForms = async () => {
 const getFormBySlug = async (payload: GetFormBySlugInputType, ipAddress: string) => {
   const { slug } = await getFormBySlugInput.parseAsync(payload);
 
-  const [existingResponse] = await db.select().from(formResponsesTable).where(eq(formResponsesTable.ipAddress, ipAddress))
-
-  if(existingResponse){
-    throwTRPCError("BAD_REQUEST", "User already submitted the form")
-  }
-
-
-
   const form = await db.query.formsTable.findFirst({
-    where: and(eq(formsTable.slug, slug)),
+    where: eq(formsTable.slug, slug),
     with: {
       formFields: {
-        with: {
-          fieldOptions: true,
-        },
+        with: { fieldOptions: true },
       },
     },
   });
 
   if (!form) {
-    throwTRPCError("NOT_FOUND", "The requested form context configuration could not be located.");
+    throwTRPCError("NOT_FOUND", "The requested form could not be located.");
   }
+
+  const [existingResponse] = await db
+    .select()
+    .from(formResponsesTable)
+    .where(
+      and(eq(formResponsesTable.formId, form.id), eq(formResponsesTable.ipAddress, ipAddress)),
+    );
+
+  if (existingResponse) {
+    throwTRPCError("BAD_REQUEST", "You have already submitted this form.");
+  }
+
+  if (form.visibility === "private") {
+    throwTRPCError("FORBIDDEN", "This form is not currently accepting responses");
+  }
+
   return form;
 };
 
@@ -199,7 +235,7 @@ export {
   updateForm,
   deleteForm,
   getAllForms,
-  getSingleFormDetails,
+  getFormById,
   getAllPublicForms,
   getFormBySlug,
 };

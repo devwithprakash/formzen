@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useSubmitFormResponses } from "@/hooks/form/use-response";
+import { useSubmitFormResponses } from "@/hooks/response/use-response";
 import { useGetFormBySlug } from "@/hooks/form/use-forms";
 
 import { Button } from "@/components/ui/button";
@@ -18,18 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  FileText,
-  Sparkles,
-  Flower,
-  Laptop,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, CheckCircle2, Loader2, FileText, Flower, Moon, Sun } from "lucide-react";
 
 type FormTheme = "light" | "minimal" | "dark" | "gradient";
 
@@ -72,7 +62,11 @@ export default function PublicFormPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const { data: form, isLoading, error } = useGetFormBySlug(slug);
-  const { submitResponsesMutation, isSubmitting } = useSubmitFormResponses();
+  const {
+    submitResponsesMutation,
+    isSubmitting,
+    error: formResponseError,
+  } = useSubmitFormResponses();
 
   const themeStyles: Record<
     FormTheme,
@@ -86,7 +80,6 @@ export default function PublicFormPage() {
     }
   > = {
     light: {
-      // "FORMZEN LIGHT" — Matches Dashboard Branding
       wrapper:
         "min-h-screen bg-[#fafafa] text-foreground antialiased font-sans py-16 px-4 selection:bg-primary/10 relative",
       card: "bg-card border border-border shadow-sm rounded-xl overflow-hidden",
@@ -98,7 +91,6 @@ export default function PublicFormPage() {
         "w-full text-sm font-medium h-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors shadow-sm",
     },
     minimal: {
-      // "minimal" — Soft pink accents, but normal neutral text for maximum readability
       wrapper:
         "min-h-screen bg-[#fffafd] text-slate-900 antialiased font-sans py-16 px-4 selection:bg-rose-100 relative overflow-x-hidden",
       card: "bg-white/80 backdrop-blur-sm border border-rose-100/70 shadow-[0_8px_30px_rgb(253,244,245,0.4)] rounded-2xl overflow-hidden z-10",
@@ -111,7 +103,6 @@ export default function PublicFormPage() {
         "w-full text-sm font-semibold h-10 bg-gradient-to-r from-rose-400 to-pink-500 hover:from-rose-500 hover:to-pink-600 text-white rounded-xl transition-all shadow-sm shadow-rose-200 active:scale-[0.98]",
     },
     dark: {
-      // "FOREST OBSIDIAN" — Ultra-deep emerald ink tones with sharp mint/teal neon accents
       wrapper:
         "min-h-screen bg-[#040807] text-white [&&_h1]:text-white [&&_h2]:text-white [&&_h3]:text-white antialiased font-sans py-16 px-4 selection:bg-emerald-500/30 relative overflow-x-hidden",
       card: "bg-[#0a110f]/90 backdrop-blur-md border border-emerald-950/50 shadow-[0_0_50px_-12px_rgba(16,185,129,0.12)] rounded-2xl overflow-hidden z-10",
@@ -124,7 +115,6 @@ export default function PublicFormPage() {
         "w-full text-sm font-semibold h-10 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]",
     },
     gradient: {
-      // "minimal CYBER SUNSET" — Light desaturated sunset gradient with clean typography
       wrapper:
         "min-h-screen bg-gradient-to-br from-orange-50 via-white to-purple-50 text-slate-900 antialiased font-sans py-16 px-4 selection:bg-orange-100",
       card: "bg-white/80 backdrop-blur-md border border-orange-100 shadow-md rounded-2xl overflow-hidden",
@@ -185,7 +175,10 @@ export default function PublicFormPage() {
       setIsSubmitted(true);
     } catch (err) {
       console.error("Submission failed:", err);
-      setValidationError("Failed to complete submission. Please check your connection.");
+      setValidationError(
+        formResponseError?.message ||
+          "Failed to complete submission. Please check your connection.",
+      );
     }
   };
 
@@ -200,7 +193,7 @@ export default function PublicFormPage() {
     );
   }
 
-  if (error || !form || !form.isPublished) {
+  if (error || !form || form.visibility === "private") {
     return (
       <div className={activeTheme.wrapper + " flex items-center justify-center"}>
         <Card

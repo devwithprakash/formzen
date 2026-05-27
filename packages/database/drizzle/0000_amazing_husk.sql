@@ -1,4 +1,5 @@
-CREATE TYPE "public"."form_theme" AS ENUM('light', 'dark', 'minimal', 'gradient', 'modern');--> statement-breakpoint
+CREATE TYPE "public"."form_theme" AS ENUM('light', 'dark', 'minimal', 'gradient');--> statement-breakpoint
+CREATE TYPE "public"."visibility" AS ENUM('public', 'unlisted', 'private');--> statement-breakpoint
 CREATE TYPE "public"."field_type" AS ENUM('text', 'textarea', 'email', 'number', 'phone', 'select', 'radio', 'checkbox', 'date', 'file');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -16,6 +17,7 @@ CREATE TABLE "forms" (
 	"title" varchar(50) NOT NULL,
 	"description" varchar(500),
 	"theme" "form_theme" DEFAULT 'light' NOT NULL,
+	"visibility" "visibility" DEFAULT 'private' NOT NULL,
 	"slug" varchar NOT NULL,
 	"is_published" boolean DEFAULT false NOT NULL,
 	"created_by" uuid NOT NULL,

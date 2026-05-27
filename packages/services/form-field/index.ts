@@ -128,11 +128,22 @@ const updateFormFieldsBatch = async (payload: UpdateBatchFormFieldInputType) => 
         const [inserted] = await tx.insert(formFieldsTable).values(fieldValues).returning();
         finalFieldRecord = inserted;
       } else {
+        // Inside your API/TRPC handler
+        const fieldId = fieldData.id;
+
+        if (!fieldId) {
+          throwTRPCError("BAD_REQUEST", "Field id is required");
+        }
+
+      
+        const targetId = fieldId;
+
         const [updated] = await tx
           .update(formFieldsTable)
           .set(fieldValues)
-          .where(eq(formFieldsTable.id, fieldData.id))
+          .where(eq(formFieldsTable.id, targetId))
           .returning();
+
         finalFieldRecord = updated;
       }
 

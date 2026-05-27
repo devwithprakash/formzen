@@ -1,26 +1,39 @@
 import { analyticsService } from "../../services";
-import { protectedProcedure, publicProcedure, router } from "../../trpc";
-import { generatePath } from "../../utils/path-generator";
-import { getGlobalFormAnalyticsOutputModel } from "./model";
+import { protectedProcedure, router } from "../../trpc";
+import { getDashboardAnalyticsOutputModel, getFormAnalyticsOutputModel } from "./model";
 
 const TAGS = ["Analytics"];
-const getPath = generatePath("/analytics");
 
 export const analyticsRouter = router({
-  getAnalytics: protectedProcedure
+  getFormAnalytics: protectedProcedure
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/get/"),
+        path: "/analytics/forms",
         tags: TAGS,
+        summary: "Get analytics for all forms",
       },
     })
-    .output(getGlobalFormAnalyticsOutputModel)
+    .output(getFormAnalyticsOutputModel)
     .query(async ({ ctx }) => {
       const { userId } = ctx;
 
-      const result = await analyticsService.getGlobalFormAnalytics(userId);
+      return await analyticsService.getFormAnalytics(userId);
+    }),
 
-      return result;
+  getDashboardAnalytics: protectedProcedure
+    .meta({
+      openapi: {
+        method: "GET",
+        path: "/analytics/dashboard",
+        tags: TAGS,
+        summary: "Get dashboard analytics overview",
+      },
+    })
+    .output(getDashboardAnalyticsOutputModel)
+    .query(async ({ ctx }) => {
+      const { userId } = ctx;
+
+      return await analyticsService.getDashboardAnalytics(userId);
     }),
 });

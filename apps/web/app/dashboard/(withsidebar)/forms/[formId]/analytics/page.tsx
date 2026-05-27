@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
-import { useFormAnalytics } from "@/hooks/analytics/use-analytics";
 import { useParams } from "next/navigation";
 
 const AnalyticsCharts = dynamic(

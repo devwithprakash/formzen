@@ -1,5 +1,19 @@
 import { trpc } from "@/trpc/client";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+export interface FormRecord {
+  id: string;
+  title: string;
+  description: string | null;
+  theme: "light" | "dark" | "minimal" | "gradient" | "modern";
+  visibility: "private" | "public" | "unlisted";
+  slug: string;
+  isPublished: boolean;
+  createdBy: string;
+  createdAt: Date | string;
+  updatedAt: Date | string | null;
+  formFields?: any[];
+}
 
 export const useCreateForm = () => {
   const utils = trpc.useUtils();
@@ -30,19 +44,6 @@ export const useCreateForm = () => {
     isLoading: createFormMutation.isPending,
   };
 };
-
-export interface FormRecord {
-  id: string;
-  title: string;
-  description: string | null;
-  theme: "light" | "dark" | "minimal" | "gradient" | "modern";
-  slug: string;
-  isPublished: boolean;
-  createdBy: string;
-  createdAt: Date | string;
-  updatedAt: Date | string | null;
-  formFields?: any[];
-}
 
 export const useGetForm = (
   formId: string,
@@ -95,11 +96,11 @@ export const useUpdateForm = () => {
 
 export const useDeleteForm = () => {
   const utils = trpc.useUtils();
-  const router = useRouter();
+
   const deleteMutation = trpc.form.delete.useMutation({
     onSuccess: (data) => {
       utils.form.invalidate();
-      router.push(`/dashboard/forms`);
+
       console.log(data);
     },
     onError: (error) => {
@@ -113,7 +114,7 @@ export const useDeleteForm = () => {
 };
 
 export const useGetFormBySlug = (slug: string) => {
-  const { data, error, isLoading } = trpc.form.getFormBySlug.useQuery({ slug });
+  const { data, error, isLoading } = trpc.form.getBySlug.useQuery({ slug });
 
   return {
     data,
@@ -123,7 +124,7 @@ export const useGetFormBySlug = (slug: string) => {
 };
 
 export const useGetAllPublicForms = () => {
-  const { data, error, isLoading } = trpc.form.getAllPublicForms.useQuery();
+  const { data, error, isLoading } = trpc.form.listPublic.useQuery();
 
   return {
     data,

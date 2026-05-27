@@ -9,6 +9,9 @@ import {
   AlertCircle,
   Layers,
   CheckCircle2,
+  FileText,
+  TrendingUp,
+  Eye,
 } from "lucide-react";
 import {
   Select,
@@ -17,12 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useGlobalAnalytics } from "@/hooks/analytics/use-analytics";
+import { useDashboardAnalytics, useFormAnalytics } from "@/hooks/analytics/use-analytics";
 import { useAuth } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 
 // Lazy-loaded analytics charts mapping live global dashboard tracking trends
 const AnalyticsCharts = dynamic(
-  () => import("../../../../components/dashboard/analytics-charts").then((mod) => mod.AnalyticsCharts),
+  () =>
+    import("../../../../components/dashboard/analytics-charts").then((mod) => mod.AnalyticsCharts),
   {
     ssr: false,
     loading: () => (
@@ -38,7 +43,8 @@ export default function AnalyticsPage() {
   const { userId } = useAuth();
 
   // Pass extracted userId context into your custom analytics state hook wrapper
-  const { data, error, isLoading } = useGlobalAnalytics();
+  const { data: analytics, error, isLoading } = useDashboardAnalytics();
+  const { data: chartAnalytics } = useFormAnalytics();
 
   if (isLoading) {
     return (
@@ -49,7 +55,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (error || !data) {
+  if (error || !analytics) {
     return (
       <div className="p-6 border border-destructive/20 bg-destructive/5 rounded-xl text-destructive text-sm flex items-center gap-3 max-w-xl mx-auto mt-12 animate-in slide-in-from-top-4">
         <AlertCircle className="h-5 w-5 shrink-0" />
@@ -63,7 +69,36 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { cards, charts } = data;
+  const stats = [
+    {
+      label: "Total Forms",
+      value: analytics?.totalForms ?? 0,
+      change: "+2 this month",
+      icon: FileText,
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Total Responses",
+      value: analytics?.totalResponses,
+      change: "+324 this week",
+      icon: Users,
+      color: "bg-chart-2/20 text-chart-2",
+    },
+    {
+      label: "Completion Rate",
+      value: analytics?.completionRate,
+      change: "+5% from last month",
+      icon: TrendingUp,
+      color: "bg-chart-5/20 text-chart-5",
+    },
+    {
+      label: "Public Forms",
+      value: analytics?.publicForms,
+      change: "+12% this week",
+      icon: Eye,
+      color: "bg-chart-4/50 text-foreground",
+    },
+  ];
 
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
@@ -92,54 +127,36 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Global Metrics Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Card 1: Total Responses */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 shadow-sm hover:border-border transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="flex items-center gap-1 text-xs text-emerald-500 font-medium">
-              <ArrowUpRight className="h-3 w-3" /> Live
-            </div>
-          </div>
-          <p className="font-serif text-2xl sm:text-3xl text-foreground tracking-tight">
-            {cards.totalResponses.toLocaleString()}
-          </p>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Submissions</p>
-        </div>
-
-        {/* Card 2: Total Created Forms */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 shadow-sm hover:border-border transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-10 w-10 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Layers className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="font-serif text-2xl sm:text-3xl text-foreground tracking-tight">
-            {cards.totalForms.toLocaleString()}
-          </p>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Total Created Forms</p>
-        </div>
-
-        {/* Card 3: Total Published Forms */}
-        <div className="bg-card rounded-xl p-5 border border-border/50 shadow-sm hover:border-border transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="font-serif text-2xl sm:text-3xl text-foreground tracking-tight">
-            {cards.totalPublishedForms.toLocaleString()}
-          </p>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Active Public Forms</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              className="bg-card rounded-xl p-5 border border-border/50"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div
+                  className={`h-10 w-10 rounded-lg ${stat.color} flex items-center justify-center`}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="font-serif text-2xl text-foreground">{stat.value}</p>
+              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+              <p className="text-xs text-primary mt-2">{stat.change}</p>
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Dynamic Time-Series Analytics Charts Component Wrapper */}
+
       <AnalyticsCharts
-        responsesOverTime={charts.responsesOverTime}
-        weeklyActivity={charts.weeklyActivity}
+        responsesOverTime={chartAnalytics?.responsesOverTime ?? []}
+        responsesPerForm={chartAnalytics?.responsesPerForm ?? []}
       />
     </div>
   );

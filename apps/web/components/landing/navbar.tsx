@@ -5,31 +5,25 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth, UserButton, Show, useClerk } from "@clerk/nextjs";
+import { Show, useClerk } from "@clerk/nextjs";
 import { useMe } from "@/hooks/auth/use-me";
 
 const navLinks = [
   { href: "#features", label: "Features" },
-  { href: "#integrations", label: "Integrations" },
   { href: "/explore", label: "Explore" },
   { href: "/pricing", label: "Pricing" },
+  { href: "http://localhost:8000/docs", label: "API Docs" },
 ];
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
 
-  const { me, getMe, isLoading } = useMe();
+  const { me } = useMe();
 
   console.log(me?.fullName);
 
-  useEffect(() => {
-    getMe();
-  }, []);
-
-  // Track window scroll state to change visual density dynamically
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -55,7 +49,6 @@ export function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo Brand Engine */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
               <span className="text-primary-foreground font-serif text-lg font-medium">F</span>
@@ -78,7 +71,6 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop Call to Actions */}
           <div className="hidden md:flex items-center gap-3">
             <Show when="signed-out">
               <Link
@@ -105,7 +97,6 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Interactive Trigger */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-secondary/50 transition-colors"
             onClick={() => setIsOpen(!isOpen)}
@@ -120,7 +111,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Safe Unmount Exit Animation Container */}
       <AnimatePresence>
         {isOpen && (
           <motion.div

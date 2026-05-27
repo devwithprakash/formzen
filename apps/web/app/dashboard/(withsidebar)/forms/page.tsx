@@ -4,14 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Plus,
   Search,
   Filter,
   MoreHorizontal,
   FileText,
   Eye,
   Users,
-  Copy,
   Trash2,
   ExternalLink,
   BarChart3,
@@ -35,10 +33,12 @@ import {
 } from "@/components/ui/select";
 import { CreateFormDialog } from "@/components/form-builder/create-form-dialog";
 import { useCreateForm, useDeleteForm, useGetAllForms } from "@/hooks/form/use-forms";
+import { useRouter } from "next/navigation";
 
 export default function FormsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const router = useRouter();
 
   const { submitForm } = useCreateForm();
   const { data: forms } = useGetAllForms();
@@ -48,10 +48,7 @@ export default function FormsPage() {
     forms?.filter((form) => {
       const matchesSearch = form.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "public" && form.isPublished === true) ||
-        (statusFilter === "unlisted" && form.isPublished === false);
+      const matchesStatus = statusFilter === "all" || form.visibility === statusFilter;
 
       return matchesSearch && matchesStatus;
     }) ?? [];
@@ -59,6 +56,7 @@ export default function FormsPage() {
   const handleDeleteForm = async (formId: string) => {
     try {
       await deleteMutation.mutateAsync({ formId });
+      router.push("/dashboard/forms");
     } catch (error) {
       console.error("Failed to delete form");
     }
@@ -68,6 +66,19 @@ export default function FormsPage() {
     const url = `http://localhost:3000/forms/${slug}`;
 
     await navigator.clipboard.writeText(url);
+  };
+
+  const getVisibilityStyles = (visibility: string) => {
+    switch (visibility) {
+      case "public":
+        return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+      case "unlisted":
+        return "bg-amber-500/10 text-amber-700 dark:text-amber-400";
+      case "private":
+        return "bg-rose-500/10 text-rose-700 dark:text-rose-400";
+      default:
+        return "bg-slate-500/10 text-slate-700 dark:text-slate-400";
+    }
   };
 
   return (
@@ -100,9 +111,9 @@ export default function FormsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="paused">Paused</SelectItem>
+            <SelectItem value="public">Public</SelectItem>
+            <SelectItem value="unlisted">Unlisted</SelectItem>
+            <SelectItem value="private">Private</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -139,7 +150,7 @@ export default function FormsPage() {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem asChild>
                       <Link
-                        href={`/dashboard/forms/${form.id}/edit`}
+                        href={`/dashboard/forms/${form.id}/builder`}
                         className="flex items-center gap-2 cursor-pointer"
                       >
                         <FileText className="h-4 w-4 opacity-70" />
@@ -171,6 +182,15 @@ export default function FormsPage() {
                       <ExternalLink className="h-4 w-4 opacity-70" />
                       Copy Link
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/dashboard/forms/${form.id}/edit`}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Settings className="h-4 w-4 opacity-70" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleDeleteForm(form.id)}
@@ -192,17 +212,13 @@ export default function FormsPage() {
                   {form.title}
                 </h3>
               </Link>
-
-              {/* Meta Info Status Row */}
               <div className="flex items-center gap-2.5 mt-1.5">
                 <span
-                  className={`text-xs px-2.5 py-0.5 font-medium rounded-full ${
-                    form.isPublished
-                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                  }`}
+                  className={`text-xs px-2.5 py-0.5 font-medium rounded-full ${getVisibilityStyles(
+                    form.visibility,
+                  )}`}
                 >
-                  {form.isPublished ? "Public" : "Unlisted"}
+                  {form.visibility}
                 </span>
                 <span className="text-xs text-muted-foreground/80">
                   Created{" "}
@@ -214,11 +230,10 @@ export default function FormsPage() {
                 </span>
               </div>
 
-              {/* Footer Metrics Panel */}
               <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/60">
                 <div className="flex items-baseline gap-1 text-sm">
                   <Users className="h-4 w-4 text-muted-foreground self-center mr-1" />
-                  <span className="text-foreground font-semibold">22</span>
+                  <span className="text-foreground font-semibold">{form.responseCount}</span>
                   <span className="text-muted-foreground text-xs">responses</span>
                 </div>
               </div>

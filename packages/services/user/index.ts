@@ -17,7 +17,7 @@ const USER_SELECT_FIELDS = {
   imageUrl: usersTable.imageUrl,
 } as const;
 
-export const syncUser = async (payload: UserInputType) => {
+export const upsertUserByClerkId = async (payload: UserInputType) => {
   const { clerkUserId } = await userInput.parseAsync(payload);
 
   const [existingUser] = await db

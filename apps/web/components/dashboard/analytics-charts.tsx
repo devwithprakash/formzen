@@ -44,7 +44,19 @@ const deviceData = [
   { name: "Tablet", value: 7, color: "var(--chart-5)" },
 ];
 
-export function AnalyticsCharts() {
+interface AnalyticsChartsProps {
+  responsesPerForm: { formTitle: string; responseCount: number }[];
+  responsesOverTime: { date: string; count: number }[];
+}
+
+export function AnalyticsCharts({ responsesPerForm, responsesOverTime }: AnalyticsChartsProps) {
+  // if (!responsesPerForm.length && !responsesOverTime.length) {
+  //   return (
+  //     <div className="flex items-center justify-center h-[300px] border border-dashed rounded-xl text-muted-foreground">
+  //       No data available for this timeframe.
+  //     </div>
+  //   );
+  // }
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Responses Over Time */}
@@ -57,7 +69,7 @@ export function AnalyticsCharts() {
         <h3 className="font-serif text-lg text-foreground mb-6">Responses Over Time</h3>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={responseData}>
+            <AreaChart data={responsesOverTime}>
               <defs>
                 <linearGradient id="colorResponses" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
@@ -104,7 +116,7 @@ export function AnalyticsCharts() {
         <h3 className="font-serif text-lg text-foreground mb-6">Form Performance</h3>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={formPerformance} layout="vertical">
+            <BarChart data={responsesPerForm} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
               <XAxis
                 type="number"
@@ -132,7 +144,7 @@ export function AnalyticsCharts() {
       </motion.div>
 
       {/* Device Breakdown */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
@@ -174,7 +186,7 @@ export function AnalyticsCharts() {
             ))}
           </div>
         </div>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }

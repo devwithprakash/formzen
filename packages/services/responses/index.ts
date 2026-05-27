@@ -1,4 +1,4 @@
-import db, { eq, InferSelectModel } from "@repo/database";
+import db, { and, eq, InferSelectModel } from "@repo/database";
 import {
   getFormResponseInput,
   GetFormResponseInputType,
@@ -16,12 +16,11 @@ const createResponse = async (payload: SubmitResponseInputType) => {
   const [existingResponse] = await db
     .select()
     .from(formResponsesTable)
-    .where(eq(formResponsesTable.ipAddress, ipAddress));
+    .where(and(eq(formResponsesTable.formId, formId), eq(formResponsesTable.ipAddress, ipAddress)));
 
   if (existingResponse) {
-    throwTRPCError("BAD_REQUEST", "User already submitted the response");
+    throwTRPCError("BAD_REQUEST", "You have already submitted this response for this form.");
   }
-
   const [insertedResponse] = await db
     .insert(formResponsesTable)
     .values({

@@ -23,6 +23,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useDeleteForm, useGetForm, useUpdateForm } from "@/hooks/form/use-forms";
+import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const visualThemes = [
   {
@@ -58,6 +66,7 @@ const visualThemes = [
 export default function FormSettingsPage() {
   const params = useParams();
   const formId = params.formId as string;
+  const router = useRouter();
 
   const [title, setTitle] = useState("Customer Feedback Survey");
   const [description, setDescription] = useState(
@@ -65,6 +74,7 @@ export default function FormSettingsPage() {
   );
   const [isPublished, setIsPublished] = useState(true);
   const [theme, setTheme] = useState<"light" | "dark" | "minimal" | "gradient">("light");
+  const [visibility, setVisibility] = useState<"public" | "private" | "unlisted">("unlisted");
   const [isSaving, setIsSaving] = useState(false);
 
   const { updateFormMutation } = useUpdateForm();
@@ -92,6 +102,7 @@ export default function FormSettingsPage() {
         description,
         theme,
         isPublished,
+        visibility,
       });
     } catch (error) {
       console.error("Failed to update form settings:", error);
@@ -103,6 +114,7 @@ export default function FormSettingsPage() {
   const handleDeleteForm = async () => {
     try {
       await deleteMutation.mutateAsync({ formId });
+      router.push(`/dashboard/forms`);
     } catch (error) {
       console.error("Failed to delete form:", error);
     }
@@ -243,7 +255,7 @@ export default function FormSettingsPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="border border-destructive/20 bg-destructive/5 rounded-xl p-6"
+            className="border hidden lg:block border-destructive/20 bg-destructive/5 rounded-xl p-6"
           >
             <div className="flex items-center gap-2 text-destructive mb-2">
               <AlertTriangle className="h-4 w-4" />
@@ -265,54 +277,83 @@ export default function FormSettingsPage() {
         </div>
 
         <div className="space-y-6">
+          {/* Publication Status & Visibility Card */}
           <motion.div
             initial={{ opacity: 0, x: 15 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-card border border-border/50 rounded-xl p-5 shadow-sm space-y-5"
+            className="bg-card border border-border/50 rounded-xl p-5 shadow-sm space-y-6"
           >
-            <div>
-              <h4 className="font-medium text-sm text-foreground">Form Publication Status</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Control live submission window states.
-              </p>
+            {/* Publication Status */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium text-sm text-foreground">Form Publication Status</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Control live submission window.
+                </p>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-secondary/40 border border-border/40 p-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
+                      isPublished
+                        ? "bg-primary/10 text-primary"
+                        : "bg-neutral-200 dark:bg-neutral-800 text-muted-foreground",
+                    )}
+                  >
+                    {isPublished ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {isPublished ? "Active" : "Draft"}
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={isPublished} onCheckedChange={setIsPublished} />
+              </div>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-secondary/40 border border-border/40 p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center transition-colors",
-                    isPublished
-                      ? "bg-primary/10 text-primary"
-                      : "bg-neutral-200 dark:bg-neutral-800 text-muted-foreground",
-                  )}
-                >
-                  {isPublished ? <Globe className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {isPublished ? "Active & Published" : "Draft / Private"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isPublished ? "Accepting live responses" : "Form is closed"}
-                  </p>
-                </div>
-              </div>
-              <Switch checked={isPublished} onCheckedChange={setIsPublished} />
+            {/* Visibility Dropdown */}
+            <div className="pt-2 border-t border-border/40">
+              <Label className="text-sm font-medium text-foreground mb-2 block">
+                Form Visibility
+              </Label>
+              <Select value={visibility} onValueChange={(val: any) => setVisibility(val)}>
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder="Select visibility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="unlisted">Unlisted</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </motion.div>
 
-            <div className="text-xs space-y-2 text-muted-foreground border-t border-border/40 pt-4 px-1">
-              <div className="flex justify-between">
-                <span>Unique Access String:</span>
-                <span className="font-mono text-foreground select-all bg-secondary px-1.5 py-0.5 rounded">
-                  {formId ? formId.slice(0, 8) : "form-id"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>API Submission Endpoint:</span>
-                <span className="text-primary hover:underline cursor-pointer">View Docs</span>
-              </div>
+          {/* Move Danger Zone here for better mobile stacking */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="border lg:hidden border-destructive/20 bg-destructive/5 rounded-xl p-6"
+          >
+            <div className="flex items-center gap-2 text-destructive mb-2">
+              <AlertTriangle className="h-4 w-4" />
+              <h3 className="font-serif text-lg">Danger Zone</h3>
             </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Once you remove this form layer, all associated visual metadata structures and
+              respondent tables will be permanently deleted.
+            </p>
+            <Button
+              onClick={handleDeleteForm}
+              variant="destructive"
+              className="bg-destructive hover:bg-destructive/90 gap-2 text-sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Delete this form completely</span>
+            </Button>
           </motion.div>
         </div>
       </div>

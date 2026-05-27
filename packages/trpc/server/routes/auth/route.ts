@@ -1,28 +1,25 @@
 import { userService } from "../../services";
-import { protectedProcedure, publicProcedure, router } from "../../trpc";
-import { generatePath } from "../../utils/path-generator";
-import { userInputModel, userOutputModel } from "./model";
+import { protectedProcedure, router } from "../../trpc";
+import { userOutputModel } from "./model";
 
-const TAGS = ["Authentication"];
-const getPath = generatePath("/authentication");
+const TAGS = ["Auth"];
 
 export const authRouter = router({
   me: protectedProcedure
     .meta({
       openapi: {
-        method: "POST",
-        path: getPath("/me"),
+        method: "GET",
+        path: "/auth/me",
         tags: TAGS,
+        summary: "Get current authenticated user",
       },
     })
     .output(userOutputModel)
-    .mutation(async ({ ctx }) => {
-      const userId = ctx.userId;
+    .query(async ({ ctx }) => {
+      const { userId } = ctx;
 
-      const user = await userService.syncUser({
+      return await userService.upsertUserByClerkId({
         clerkUserId: userId,
       });
-
-      return user;
     }),
 });

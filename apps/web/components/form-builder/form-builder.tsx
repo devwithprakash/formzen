@@ -24,6 +24,8 @@ import {
   Globe,
   GlobeLock,
   EyeOff,
+  Link2,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import { useGetForm, useUpdateForm } from "@/hooks/form/use-forms";
 import { useSyncFormFields } from "@/hooks/form/use-form-field";
+import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
 
 interface FormFieldOption {
   label: string;
@@ -152,6 +155,8 @@ export function FormBuilder() {
   const [isSaving, setIsSaving] = useState(false);
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
   const [isMobileAddFieldsOpen, setIsMobileAddFieldsOpen] = useState(false);
+  const [visibility, setVisibility] = useState<"public" | "unlisted" | "private">("private");
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const { form, isLoading } = useGetForm(formId);
   const { syncFieldsMutation } = useSyncFormFields();
@@ -166,19 +171,11 @@ export function FormBuilder() {
       if (form.formFields) {
         setFields(form.formFields as FormField[]);
       }
+      setVisibility(form.visibility);
     }
   }, [form]);
 
   const selectedField = fields.find((f) => f.id === selectedFieldId);
-
-  const handleFormVisibilty = async () => {
-    await updateFormMutation.mutateAsync({
-      formId,
-      title: formName,
-      description: formDescription,
-      theme: theme,
-    });
-  };
 
   const handleSelectField = (id: string) => {
     setSelectedFieldId(id);
@@ -274,6 +271,7 @@ export function FormBuilder() {
           theme,
           description: formDescription,
           isPublished,
+          visibility,
         }),
 
         syncFieldsMutation.mutateAsync(payload),
@@ -546,39 +544,47 @@ export function FormBuilder() {
             </Button>
           )}
 
-          <div className="hidden sm:flex items-center gap-0.5 p-0.5 bg-muted/50 rounded-md border border-border/40 h-8">
-            <button
-              type="button"
-              onClick={() => setIsPublished(false)}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 h-7 text-xs font-medium rounded transition-all duration-150 native-focus-accent",
-                !isPublished
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground/70",
-              )}
-            >
-              <EyeOff className="h-3 w-3" />
-              Draft
-            </button>
+          <div className="flex items-center gap-0.5 p-0.5 bg-muted/50 rounded-md border border-border/40 h-8">
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 h-7 text-xs font-medium rounded transition-all duration-150 native-focus-accent",
+                    visibility !== "private"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "bg-background text-foreground shadow-sm",
+                  )}
+                >
+                  {/* ... icons logic ... */}
+                  {visibility.charAt(0).toUpperCase() + visibility.slice(1)}
+                  <ChevronDown className="h-3 w-3 opacity-70 ml-1" />
+                </button>
+              </PopoverTrigger>
 
-            <button
-              type="button"
-              onClick={() => setIsPublished(true)}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 h-7 text-xs font-medium rounded transition-all duration-150 native-focus-accent",
-                isPublished
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground/70",
-              )}
-            >
-              {isPublished && (
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground/70" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-foreground" />
-                </span>
-              )}
-              Published
-            </button>
+              <PopoverContent className="w-40 p-1" align="end">
+                {[
+                  { id: "public", label: "Public", icon: Globe },
+                  { id: "unlisted", label: "Unlisted", icon: Link2 },
+                  { id: "private", label: "Private", icon: Lock },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setVisibility(item.id as any);
+                      setIsPopoverOpen(false); // This forces the popup to close
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm hover:bg-muted transition-colors",
+                      visibility === item.id && "bg-muted font-medium",
+                    )}
+                  >
+                    <item.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    {item.label}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
 
           <Button

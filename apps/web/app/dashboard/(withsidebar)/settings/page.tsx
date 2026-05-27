@@ -6,16 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMe } from "@/hooks/auth/use-me";
-import { useEffect } from "react";
 import { useClerk } from "@clerk/nextjs";
 
 export default function SettingsPage() {
-  const { me, getMe, isLoading } = useMe();
+  const { me } = useMe();
   const { signOut } = useClerk();
-
-  useEffect(() => {
-    getMe();
-  }, []);
 
   const handleLogout = () => {
     signOut();

@@ -4,7 +4,7 @@ import { relations } from "drizzle-orm";
 import { formFieldsTable } from "./form-field";
 
 export const formThemeEnum = pgEnum("form_theme", ["light", "dark", "minimal", "gradient"]);
-export const formStatusEnum = pgEnum("form_status", ["public", "unlisted", "private"]);
+export const formVisibilityEnum = pgEnum("visibility", ["public", "unlisted", "private"]);
 
 export const formsTable = pgTable("forms", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -13,7 +13,7 @@ export const formsTable = pgTable("forms", {
   description: varchar("description", { length: 500 }),
 
   theme: formThemeEnum("theme").default("light").notNull(),
-  status: formStatusEnum("status").default("private").notNull(),
+  visibility: formVisibilityEnum("visibility").default("private").notNull(),
 
   slug: varchar("slug").unique().notNull(),
   isPublished: boolean("is_published").default(false).notNull(),

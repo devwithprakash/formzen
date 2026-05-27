@@ -1,7 +1,6 @@
-import { getFormResponseInput } from "@repo/services/responses/model";
 import { responseService } from "../../services";
 import { protectedProcedure, publicProcedure, router } from "../../trpc";
-import { generatePath } from "../../utils/path-generator";
+
 import {
   createResponseInputModel,
   createResponseOutputModel,
@@ -9,34 +8,40 @@ import {
   getFormResponseOutputModel,
 } from "./model";
 
-const TAGS = ["Response"];
-const getPath = generatePath("/response");
+const TAGS = ["Responses"];
 
 export const responseRouter = router({
   create: publicProcedure
     .meta({
       openapi: {
         method: "POST",
-        path: getPath("/create"),
+        path: "/forms/{formId}/responses",
         tags: TAGS,
+        summary: "Submit form response",
       },
     })
     .input(createResponseInputModel)
     .output(createResponseOutputModel)
     .mutation(async ({ input, ctx }) => {
-      const ipAddress = ctx.ipAddress;
       const { formId, answer } = input;
+      const { ipAddress } = ctx;
 
-      const result = await responseService.createResponse({ formId, ipAddress, answer });
+      const result = await responseService.createResponse({
+        formId,
+        ipAddress,
+        answer,
+      });
 
       return result;
     }),
+
   getFormResponses: protectedProcedure
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/get-response"),
+        path: "/forms/{formId}/responses",
         tags: TAGS,
+        summary: "Get form responses",
       },
     })
     .input(getFormResponseInputModel)
@@ -44,7 +49,9 @@ export const responseRouter = router({
     .query(async ({ input }) => {
       const { formId } = input;
 
-      const result = await responseService.getFormResponse({ formId });
+      const result = await responseService.getFormResponse({
+        formId,
+      });
 
       return result;
     }),

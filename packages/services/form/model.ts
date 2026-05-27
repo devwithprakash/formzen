@@ -11,6 +11,7 @@ export const updateFormInput = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   theme: z.enum(["light", "dark", "minimal", "gradient"]),
+  visibility: z.enum(["public", "private", "unlisted"]),
   isPublished: z
     .preprocess((val) => {
       if (typeof val !== "boolean") {

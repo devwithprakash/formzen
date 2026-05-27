@@ -4,25 +4,24 @@ export const getFormAnalyticsInputModel = z.object({
   formId: z.string(),
 });
 
-export const getGlobalFormAnalyticsOutputModel = z.object({
-  cards: z.object({
-    totalForms: z.number(),
-    totalPublishedForms: z.number(),
-    totalResponses: z.number(),
-  }),
-  charts: z.object({
-    responsesOverTime: z.array(
-      z.object({
-        date: z.string(),
-        submissions: z.number(),
-      })
-    ),
-    weeklyActivity: z.array(
-      z.object({
-        day: z.string(),
-        count: z.number(),
-      })
-    ),
-  }),
+export const getFormAnalyticsOutputModel = z.object({
+  responsesPerForm: z.array(
+    z.object({
+      formTitle: z.string(),
+      responseCount: z.number(),
+    }),
+  ),
+  responsesOverTime: z.array(
+    z.object({
+      date: z.string(),
+      count: z.number(),
+    }),
+  ),
 });
 
+export const getDashboardAnalyticsOutputModel = z.object({
+  totalForms: z.coerce.number(),
+  publicForms: z.coerce.number(),
+  totalResponses: z.coerce.number(),
+  completionRate: z.coerce.number(),
+});

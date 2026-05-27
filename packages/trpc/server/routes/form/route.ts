@@ -1,96 +1,96 @@
 import { protectedProcedure, publicProcedure, router } from "../../trpc";
-import { generatePath } from "../../utils/path-generator";
 import {
   createFormInputModel,
   createFormOutputModel,
   deleteFormInputModel,
   deleteFormOutputModel,
   getAllFormsOutputModel,
+  getAllPublicFormOutputModel,
+  getFormByIdInputModel,
+  getFormByIdOutputModel,
   getFormBySlugInputModel,
   getFormBySlugOutputModel,
-  getSingleFormDetailsInputModel,
-  getSingleFormDetailsOutputModel,
   updateFormInputModel,
   updateFormOutputModel,
 } from "./model";
+
 import { formService } from "../../services";
 
-const TAGS = ["Form"];
-const getPath = generatePath("/form");
+const TAGS = ["Forms"];
 
 export const formRouter = router({
   create: protectedProcedure
     .meta({
       openapi: {
         method: "POST",
-        path: getPath("/create"),
+        path: "/forms",
         tags: TAGS,
+        summary: "Create form",
       },
     })
     .input(createFormInputModel)
     .output(createFormOutputModel)
     .mutation(async ({ input, ctx }) => {
-      const userId = ctx.userId;
+      const { userId } = ctx;
       const { title, description, theme } = input;
 
-      const form = await formService.createForm({ title, description, theme }, userId);
+      const result = await formService.createForm({ title, description, theme }, userId);
 
-      return form;
+      return result;
     }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .meta({
       openapi: {
         method: "PATCH",
-        path: getPath("/update"),
+        path: "/forms/{formId}",
         tags: TAGS,
+        summary: "Update form",
       },
     })
     .input(updateFormInputModel)
     .output(updateFormOutputModel)
-    .mutation(async ({ input }) => {
-      const { formId, title, description, isPublished, theme } = input;
+    .mutation(async ({ input, ctx }) => {
+      const { userId } = ctx;
+      const { formId, ...data } = input;
 
-      const updatedForm = await formService.updateForm({
-        formId,
-        title,
-        description,
-        isPublished,
-        theme,
-      });
+      const result = await formService.updateForm({ formId, ...data }, userId);
 
-      return updatedForm;
+      return result;
     }),
 
-  delete: publicProcedure
+  delete: protectedProcedure
     .meta({
       openapi: {
         method: "DELETE",
-        path: getPath("/delete/{formId}"),
+        path: "/forms/{formId}",
         tags: TAGS,
+        summary: "Delete form",
       },
     })
     .input(deleteFormInputModel)
     .output(deleteFormOutputModel)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
+      const { userId } = ctx;
       const { formId } = input;
 
-      const deletedForm = await formService.deleteForm({ formId });
+      const result = await formService.deleteForm({ formId }, userId);
 
-      return deletedForm;
+      return result;
     }),
 
   getAll: protectedProcedure
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/get"),
+        path: "/forms",
         tags: TAGS,
+        summary: "Get all forms",
       },
     })
     .output(getAllFormsOutputModel)
     .query(async ({ ctx }) => {
-      const userId = ctx.userId;
+      const { userId } = ctx;
 
       const result = await formService.getAllForms(userId);
 
@@ -101,52 +101,49 @@ export const formRouter = router({
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/get/{formId}"),
+        path: "/forms/{formId}",
         tags: TAGS,
+        summary: "Get form by id",
       },
     })
-    .input(getSingleFormDetailsInputModel)
-    .output(getSingleFormDetailsOutputModel)
+    .input(getFormByIdInputModel)
+    .output(getFormByIdOutputModel)
     .query(async ({ input, ctx }) => {
+      const { userId } = ctx;
       const { formId } = input;
 
-      const userId = ctx.userId;
-
-      const form = await formService.getSingleFormDetails({ formId }, userId);
-
-      return form;
+      return await formService.getFormById({ formId }, userId);
     }),
 
-  getAllPublicForms: publicProcedure
+  listPublic: publicProcedure
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/form-list"),
-        tags: TAGS,
+        path: "/public/forms",
+        tags: ["Public Forms"],
+        summary: "Get all public forms",
       },
     })
-    .output(getAllFormsOutputModel)
+    .output(getAllPublicFormOutputModel)
     .query(async () => {
-      const result = await formService.getAllPublicForms();
-
-      return result;
+      return await formService.getAllPublicForms();
     }),
 
-  getFormBySlug: publicProcedure
+  getBySlug: publicProcedure
     .meta({
       openapi: {
         method: "GET",
-        path: getPath("/get/{slug}"),
+        path: "/public/forms/{slug}",
+        tags: ["Public Forms"],
+        summary: "Get public form by slug",
       },
     })
     .input(getFormBySlugInputModel)
     .output(getFormBySlugOutputModel)
     .query(async ({ input, ctx }) => {
-      const {ipAddress} = ctx
       const { slug } = input;
+      const { ipAddress } = ctx;
 
-      const form = await formService.getFormBySlug({ slug }, ipAddress);
-
-      return form;
+      return await formService.getFormBySlug({ slug }, ipAddress ?? null);
     }),
 });

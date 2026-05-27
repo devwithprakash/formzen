@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1779734588205,
-      "tag": "0000_right_shaman",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1779780020654,
-      "tag": "0001_rare_red_shift",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1779829893514,
-      "tag": "0002_cultured_mystique",
+      "when": 1779876464105,
+      "tag": "0000_amazing_husk",
       "breakpoints": true
     }
   ]

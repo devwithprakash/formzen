@@ -1,5 +1,5 @@
 {
-  "id": "8486bfe6-b6b1-4f25-9589-7cca815e118a",
+  "id": "6347ca29-56af-4239-94b1-5dc80f01f68d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -100,6 +100,14 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'light'"
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'private'"
         },
         "slug": {
           "name": "slug",
@@ -480,8 +488,16 @@
         "light",
         "dark",
         "minimal",
-        "gradient",
-        "modern"
+        "gradient"
+      ]
+    },
+    "public.visibility": {
+      "name": "visibility",
+      "schema": "public",
+      "values": [
+        "public",
+        "unlisted",
+        "private"
       ]
     },
     "public.field_type": {

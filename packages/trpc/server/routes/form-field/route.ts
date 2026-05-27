@@ -1,22 +1,21 @@
 import { formFieldService } from "../../services";
-import { publicProcedure, router } from "../../trpc";
-import { generatePath } from "../../utils/path-generator";
+import { protectedProcedure, router } from "../../trpc";
+
 import {
   updateBatchFormFieldsInputModel,
   updateBatchFormFieldsOutputModel,
 } from "../form-field/model";
 
 const TAGS = ["Form Fields"];
-const getPath = generatePath("/form-field");
 
 export const formFieldRouter = router({
-  // single route form create, update and delete
-  sync: publicProcedure
+  sync: protectedProcedure
     .meta({
       openapi: {
         method: "PUT",
-        path: getPath("/sync"),
+        path: "/forms/{formId}/fields",
         tags: TAGS,
+        summary: "Sync form fields",
       },
     })
     .input(updateBatchFormFieldsInputModel)

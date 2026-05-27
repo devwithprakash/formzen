@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  FileText,
-  BarChart3,
-  Settings,
-  Plus,
-  LogOut,
-  ChevronLeft,
-} from "lucide-react";
+import { LayoutDashboard, FileText, BarChart3, Settings, Plus, LogOut, Blocks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CreateFormDialog } from "../form-builder/create-form-dialog";
@@ -23,18 +15,15 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/dashboard/forms", icon: FileText, label: "Forms" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/explore", icon: Blocks, label: "Templates" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
 
-  const { me, getMe } = useMe();
+  const { me } = useMe();
   const { signOut } = useClerk();
-
-  useEffect(() => {
-    getMe();
-  }, []);
 
   const handleLogout = () => {
     signOut();

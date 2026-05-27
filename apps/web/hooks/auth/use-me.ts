@@ -1,26 +1,11 @@
 import { trpc } from "@/trpc/client";
 
 export function useMe() {
-  const utils = trpc.useUtils();
-
-  const { mutateAsync, isPending, error, data } = trpc.auth.me.useMutation({
-    onSuccess: () => {
-      utils.auth.invalidate();
-    },
-  });
-
-  const getMe = async () => {
-    try {
-      return await mutateAsync();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const { data, isLoading, error } = trpc.auth.me.useQuery();
 
   return {
     me: data,
-    getMe,
-    isLoading: isPending,
+    isLoading,
     error,
   };
 }

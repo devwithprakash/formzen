@@ -10,77 +10,51 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const stats = [
-  {
-    label: "Total Forms",
-    value: "12",
-    change: "+2 this month",
-    icon: FileText,
-    color: "bg-primary/10 text-primary",
-  },
-  {
-    label: "Total Responses",
-    value: "1,847",
-    change: "+324 this week",
-    icon: Users,
-    color: "bg-chart-2/20 text-chart-2",
-  },
-  {
-    label: "Completion Rate",
-    value: "87%",
-    change: "+5% from last month",
-    icon: TrendingUp,
-    color: "bg-chart-5/20 text-chart-5",
-  },
-  {
-    label: "Views",
-    value: "4,521",
-    change: "+12% this week",
-    icon: Eye,
-    color: "bg-chart-4/50 text-foreground",
-  },
-];
-
-const recentForms = [
-  {
-    id: "1",
-    name: "Customer Feedback Survey",
-    responses: 234,
-    status: "active",
-    lastUpdated: "2 hours ago",
-  },
-  {
-    id: "2",
-    name: "Job Application Form",
-    responses: 89,
-    status: "active",
-    lastUpdated: "1 day ago",
-  },
-  {
-    id: "3",
-    name: "Event Registration",
-    responses: 156,
-    status: "draft",
-    lastUpdated: "3 days ago",
-  },
-  {
-    id: "4",
-    name: "Newsletter Signup",
-    responses: 1203,
-    status: "active",
-    lastUpdated: "1 week ago",
-  },
-  {
-    id: "5",
-    name: "Product Feedback",
-    responses: 45,
-    status: "paused",
-    lastUpdated: "2 weeks ago",
-  },
-];
+import { useDeleteForm, useGetAllForms } from "@/hooks/form/use-forms";
+import { useDashboardAnalytics } from "@/hooks/analytics/use-analytics";
 
 export default function DashboardPage() {
+  const { data: recentForms, error, isLoading } = useGetAllForms();
+
+  const { deleteMutation } = useDeleteForm();
+  const { data: analytics } = useDashboardAnalytics();
+
+  const handleDeleteForm = async (formId: string) => {
+    await deleteMutation.mutateAsync({ formId });
+  };
+
+
+  const stats = [
+    {
+      label: "Total Forms",
+      value: analytics?.totalForms ?? 0,
+      change: "+2 this month",
+      icon: FileText,
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Total Responses",
+      value: analytics?.totalResponses,
+      change: "+324 this week",
+      icon: Users,
+      color: "bg-chart-2/20 text-chart-2",
+    },
+    {
+      label: "Completion Rate",
+      value: analytics?.completionRate,
+      change: "+5% from last month",
+      icon: TrendingUp,
+      color: "bg-chart-5/20 text-chart-5",
+    },
+    {
+      label: "Public Forms",
+      value: analytics?.publicForms,
+      change: "+12% this week",
+      icon: Eye,
+      color: "bg-chart-4/50 text-foreground",
+    },
+  ];
+
   return (
     <div className="space-y-8 pb-20 lg:pb-0">
       {/* Page Header */}
@@ -139,7 +113,7 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="divide-y divide-border/50">
-          {recentForms.map((form) => (
+          {recentForms?.map((form) => (
             <div
               key={form.id}
               className="flex items-center justify-between p-4 hover:bg-secondary/30 transition-colors"
@@ -153,24 +127,24 @@ export default function DashboardPage() {
                     href={`/dashboard/forms/${form.id}`}
                     className="text-sm font-medium text-foreground hover:text-primary truncate block"
                   >
-                    {form.name}
+                    {form.title}
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    {form.responses} responses · Updated {form.lastUpdated}
+                    {form.responseCount} responses · Updated {form.updatedAt}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${
-                    form.status === "active"
+                    form.visibility === "public"
                       ? "bg-primary/10 text-primary"
-                      : form.status === "draft"
+                      : form.visibility === "private"
                         ? "bg-muted text-muted-foreground"
                         : "bg-chart-4/50 text-foreground"
                   }`}
                 >
-                  {form.status}
+                  {form.visibility}
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -180,15 +154,23 @@ export default function DashboardPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/forms/${form.id}`}>Edit</Link>
+                      <Link href={`/dashboard/forms/${form.id}/builder`}>Edit</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href={`/dashboard/forms/${form.id}/analytics`}>Analytics</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    {/* <DropdownMenuItem asChild>
                       <Link href={`/forms/${form.id}/preview`}>Preview</Link>
+                    </DropdownMenuItem> */}
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/forms/${form.id}/edit`}>Settings</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleDeleteForm(form.id)}
+                      className="text-destructive"
+                    >
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
