@@ -21,7 +21,7 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 
 app.use(
   cors({
-    origin: "https://formzen-app.vercel.app/",
+    origin: env.CORS_ORIGIN,
     credentials: true,
   }),
 );

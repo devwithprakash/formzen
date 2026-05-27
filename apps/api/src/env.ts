@@ -5,8 +5,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "prod"]).default("development"),
   BASE_URL: z.string().default("https://formzen-app.vercel.app/"),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
-  CLERK_SECRET_KEY: z.string()
-
+  CLERK_SECRET_KEY: z.string(),
+  CORS_ORIGIN: z.string()
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {
