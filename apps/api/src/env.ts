@@ -3,7 +3,7 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.string().optional(),
   NODE_ENV: z.enum(["development", "prod"]).default("development"),
-  BASE_URL: z.string().default("http://localhost:8000"),
+  BASE_URL: z.string().default("https://formzen-app.vercel.app/"),
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string()
 

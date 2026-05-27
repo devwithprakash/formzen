@@ -12,7 +12,7 @@ const navLinks = [
   { href: "#features", label: "Features" },
   { href: "/explore", label: "Explore" },
   { href: "/pricing", label: "Pricing" },
-  { href: "http://localhost:8000/docs", label: "API Docs" },
+  { href: "https://formzen-app.vercel.app/docs", label: "API Docs" },
 ];
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
