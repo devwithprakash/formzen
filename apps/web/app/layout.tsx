@@ -18,25 +18,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "FormZen — Beautiful Form Builder for Modern Teams",
   description:
-    "Create stunning forms in minutes. Drag-and-drop builder, powerful analytics, and seamless integrations. Built for teams who value simplicity and design.",
-  generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
+    "Create stunning forms in minutes. Drag-and-drop builder, powerful analytics, and seamless integrations.",
 };
 
 export default function RootLayout({
@@ -45,12 +27,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <html lang="en" className={`${inter.variable} ${playfair.variable} bg-background`}>
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${inter.variable} ${playfair.variable} bg-background`}
+      >
         <body className="font-sans antialiased">
           <GlobalProviders>
-            {" "}
-            {/* ✅ add this */}
             {children}
             {process.env.NODE_ENV === "production" && <Analytics />}
           </GlobalProviders>
