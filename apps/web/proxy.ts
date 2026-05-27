@@ -11,9 +11,9 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
+const { userId } = await auth();
+  console.log("Accessing route:", req.url, "User ID:", userId, "Is Public:", isPublicRoute(req));
 
-  // Logged-out users hitting protected routes → sign-in
   if (!userId && !isPublicRoute(req)) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
